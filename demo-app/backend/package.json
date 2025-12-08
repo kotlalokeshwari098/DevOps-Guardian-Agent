@@ -1,0 +1,32 @@
+{
+  "name": "devmate",
+  "version": "1.0.0",
+  "description": "It's like a Tinder for Developers only.",
+  "keywords": [
+    "JavaScript",
+    "Node.js"
+  ],
+  "license": "ISC",
+  "author": "Pritam Saha",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.859.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.4",
+    "node-cron": "^4.2.1",
+    "razorpay": "^2.9.6",
+    "socket.io": "^4.8.1",
+    "validator": "^13.15.15"
+  }
+}
