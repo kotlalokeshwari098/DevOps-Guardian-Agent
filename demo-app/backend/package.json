@@ -11,6 +11,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
+    "test": "echo \"No tests yet\" && exit 0",
     "start": "node src/app.js",
     "dev": "nodemon src/app.js"
   },

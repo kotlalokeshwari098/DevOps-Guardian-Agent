@@ -1,0 +1,47 @@
+# CodeRabbit Configuration for DevOps Guardian Agent
+# This ensures CodeRabbit reviews our PRs with focus on quality and best practices
+
+reviews:
+  auto_review:
+    enabled: true
+  request_changes_workflow: true
+  
+  # Review settings
+  high_level_summary: true
+  poem: false
+  review_status: true
+  
+  # Custom instructions per path
+  path_instructions:
+    - path: "**/*.js"
+      instructions: |
+        This is a hackathon project for AI Agents Assemble (WeMakeDevs).
+        Focus on:
+        - Clean, maintainable code
+        - Proper error handling
+        - Clear documentation
+        - Best practices for production code
+        - Security considerations
+    
+    - path: "**/*.py"
+      instructions: |
+        This is a hackathon project for AI Agents Assemble (WeMakeDevs).
+        Focus on:
+        - Clean, maintainable code
+        - Proper error handling
+        - Clear documentation
+        - Best practices for production code
+        - Security considerations
+    
+    - path: "**/*.yml"
+      instructions: |
+        Ensure GitHub Actions workflows follow best practices:
+        - Use latest action versions
+        - Proper error handling
+        - Security considerations
+
+# Language is set at root level
+language: en-US
+
+# Tone instructions at root level
+tone_instructions: "Use a professional tone in reviews."
