@@ -3,12 +3,12 @@ module.exports = {
   testEnvironment: 'node',
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    'src//*.js',
+    'src/**/*.js',
     '!src/tests/',
     '!src/index.js'
   ],
   testMatch: [
-    '<rootDir>/src/tests/*/.test.js' 
+    '<rootDir>/src/__tests__/**/*.test.js' 
   ],
   coverageThreshold: {
     global: {
