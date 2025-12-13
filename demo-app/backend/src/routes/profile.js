@@ -20,7 +20,7 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
 //   if(!token){
 //     throw new Error("Invalid Token");
 //   }
-//   // Validate my token
+   // Validate my token
 //   const decodedMessage = await jwt.verify(token, "DevFinder@123");
 
 //   const {_id} = decodedMessage;
