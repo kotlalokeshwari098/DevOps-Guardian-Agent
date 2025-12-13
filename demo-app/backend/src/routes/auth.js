@@ -8,7 +8,7 @@ const authRouter = express.Router();
 
 authRouter.post("/signup", async (req, res) => {
   try {
-    //Validation of data
+    
     validateSignUpData(req);
 
     //Encrypt the password
