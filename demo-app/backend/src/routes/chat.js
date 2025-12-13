@@ -25,10 +25,10 @@ chatRouter.post("/chat", async(req,res)=>{
             chat
         });
 
-    } catch (error) {
-        console.error("Error in /chat endpoint:", error);
-        return res.status(500).json({ error: "Internal server error" });
-    }
+    // } catch (error) {
+    //     console.error("Error in /chat endpoint:", error);
+    //     return res.status(500).json({ error: "Internal server error" });
+    // }
 })
 
 
