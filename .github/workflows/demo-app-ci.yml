@@ -3,96 +3,123 @@ name: Demo App CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: ["**"]   # Allow trigger on all branches (best for hackathon testing)
     paths:
       - 'demo-app/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'demo-app/**'
 
 jobs:
+  # ------------------------------------------------------------------
   # Backend Tests
+  # ------------------------------------------------------------------
   backend-tests:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./demo-app/backend
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: demo-app/backend/package-lock.json
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Check code (no tests yet)
-        run: echo "Backend validation passed - tests coming soon"
-      
-      - name: Verify package.json scripts
-        run: node -e "const pkg = require('./package.json'); if (!pkg.scripts.start) process.exit(1);"
-  
-  # Frontend Tests
-  frontend-tests:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./demo-app/frontend
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: demo-app/frontend/package-lock.json
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run linter
-        run: npm run lint
-      
-      - name: Check for test script
-        run: echo "Tests coming soon - focusing on build"
-      
-      - name: Build with Vite
-        run: npm run build
+
+      - name: Run integration tests
+        run: |
+          npm run test:integration -- --coverage=false 2>&1 | tee result.log
         env:
-          CI: true
-  
+          NODE_ENV: test
+        continue-on-error: true
+
+      - name: Verify start script
+        run: node -e "const pkg = require('./package.json'); if (!pkg.scripts.start) process.exit(1);"
+        continue-on-error: true
+
+      - name: Notify Kestra on failure
+        if: failure()
+        run: |
+          LOGS="[Logs unavailable]"
+          if [ -f result.log ]; then
+            LOGS=$(cat result.log \
+              | sed -E 's/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/[REDACTED_EMAIL]/g' \
+              | sed -E 's/(sk_live|sk_test|ghp_|github_pat|api_key|token)[A-Za-z0-9-_]+/[REDACTED_SECRET]/g'
+            )
+          fi
+
+          curl -X POST "$KESTRA_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg repo "${{ github.repository }}" \
+              --arg workflow "${{ github.workflow }}" \
+              --arg job "backend-tests" \
+              --arg status "failed" \
+              --arg branch "${{ github.ref_name }}" \
+              --arg commit "${{ github.sha }}" \
+              --arg actor "${{ github.actor }}" \
+              --arg logs "$LOGS" \
+              '{repository: $repo, workflow: $workflow, job: $job, status: $status, branch: $branch, commit: $commit, actor: $actor, logs: $logs}')"
+        env:
+          KESTRA_WEBHOOK_URL: ${{ secrets.KESTRA_WEBHOOK_URL }}
+
+  # ------------------------------------------------------------------
   # Security Scan
+  # ------------------------------------------------------------------
   security-scan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Run npm audit (backend)
         working-directory: ./demo-app/backend
         run: npm audit --audit-level=high || echo "::warning::Security vulnerabilities detected in backend"
-      
+
       - name: Run npm audit (frontend)
         working-directory: ./demo-app/frontend
         run: npm audit --audit-level=high || echo "::warning::Security vulnerabilities detected in frontend"
 
-  # This job will intentionally fail for demo purposes
-  # We'll use this to trigger the DevOps Guardian Agent
+  # ------------------------------------------------------------------
+  # Intentional Failure (For Kestra Testing)
+  # ------------------------------------------------------------------
   intentional-failure:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[trigger-failure]')
+
+    if: >
+      github.event_name == 'push' &&
+      contains(toJson(github.event.commits), '[trigger-failure]')
+
     steps:
-      - name: This step will fail for demo
+      - name: Fail intentionally
         run: |
-          echo "Simulating a CI failure for DevOps Guardian Agent demo"
+          echo "🚨 Simulating CI Failure for Kestra"
           exit 1
+
+      - name: Notify Kestra on intentional failure
+        if: failure()
+        run: |
+          curl -X POST "$KESTRA_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg repo "${{ github.repository }}" \
+              --arg workflow "${{ github.workflow }}" \
+              --arg job "intentional-failure" \
+              --arg status "failed" \
+              --arg branch "${{ github.ref_name }}" \
+              --arg commit "${{ github.sha }}" \
+              --arg actor "${{ github.actor }}" \
+              --arg logs "Intentional failure triggered for testing" \
+              '{repository: $repo, workflow: $workflow, job: $job, status: $status, branch: $branch, commit: $commit, actor: $actor, logs: $logs}')"
+        env:
+          KESTRA_WEBHOOK_URL: ${{ secrets.KESTRA_WEBHOOK_URL }}

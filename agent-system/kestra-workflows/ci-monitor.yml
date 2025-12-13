@@ -1,0 +1,64 @@
+id: ci-monitor
+namespace: devops.guardian
+description: |
+  Monitors GitHub Actions workflow for failures and sends failure logs to the agent.
+
+labels:
+  team: devops
+  environment: production
+  purpose: ci-monitoring
+
+variables:
+  project_path: "{{ envs.PROJECT_PATH }}"
+
+tasks:
+  - id: check_failed_runs
+    type: io.kestra.plugin.scripts.node.Script
+    description: Execute Node.js script to check for failed GitHub Actions runs
+
+    script: |
+      const runFetch = require('{{vars.project_path}}/services/run-fetch.js');
+      console.log('Starting GitHub Actions CI monitor check...');
+      runFetch.main()
+        .then(() => { console.log('Check completed successfully'); process.exit(0); })
+        .catch((error) => { console.error('Check failed:', error); process.exit(1); });
+
+    workingDirectory: "{{vars.project_path}}"
+
+    env:
+      NODE_ENV: production
+      GITHUB_OWNER: "{{ secret('GITHUB_OWNER') }}"
+      GITHUB_REPO: "{{ secret('GITHUB_REPO') }}"
+      GITHUB_WORKFLOW_ID: "{{ secret('GITHUB_WORKFLOW_ID') }}"
+      GITHUB_TOKEN: "{{ secret('GITHUB_TOKEN') }}"
+      AGENT_URL: "{{ secret('AGENT_URL') }}"
+      AGENT_TIMEOUT: "{{ secret('AGENT_TIMEOUT') }}"
+      PROJECT_PATH: "{{ secret('PROJECT_PATH') }}"
+
+    warningOnStdErr: false
+
+    retry:
+      type: constant
+      interval: PT5M
+      maxAttempt: 3
+
+  - id: log_completion
+    type: io.kestra.core.tasks.log.Log
+    message: |
+      CI Monitor check completed at {{execution.startDate}}
+      Execution ID: {{execution.id}}
+      Status: Success
+
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "*/10 * * * *"
+    description: "Check every 10 minutes"
+
+errors:
+  - id: handle_error
+    type: io.kestra.core.tasks.log.Log
+    message: |
+      ⚠️ Error occurred during CI monitoring
+      Execution ID: {{execution.id}}
+      Error: {{execution.error}}

@@ -9,7 +9,7 @@ paymentRouter.post("/payment/create", userAuth, async (req, res) => {
   try {
     const {membershipType} = req.body
     const {firstName, lastName, email} = req.user
-    //Creating the Order
+    
     const order = await razorpayInstance.orders.create({
       amount: membershipAmount[membershipType]*100, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
       currency: "INR",
