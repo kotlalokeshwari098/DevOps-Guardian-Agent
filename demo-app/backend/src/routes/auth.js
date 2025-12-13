@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const saltRounds = 13;
 const authRouter = express.Router();
 
-// Route to handle user signup
+
 authRouter.post("/signup", async (req, res) => {
   try {
     //Validation of data
