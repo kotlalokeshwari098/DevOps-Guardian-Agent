@@ -175,7 +175,7 @@ describe('Request Router - Integration Tests', () => {
     });
 
     it('should not allow reviewing requests not addressed to user', async () => {
-      // Create a request between other users
+      // Create a request between other user
       const anotherUser = await User.create({
         firstName: 'Charlie',
         lastName: 'Brown',
