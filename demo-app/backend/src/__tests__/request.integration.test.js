@@ -169,7 +169,7 @@ describe('Request Router - Integration Tests', () => {
 
       expect(response.body.message).toBe('Connection request rejected successfully');
 
-      // Verify in database
+      // Verify database
       const updatedRequest = await ConnectionRequest.findById(connectionRequest._id);
       expect(updatedRequest.status).toBe('rejected');
     });
